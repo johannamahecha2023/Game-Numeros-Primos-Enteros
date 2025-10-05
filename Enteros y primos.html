@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Primos & Enteros — Juego educativo (Ingeniería)</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #0b1220;
+        --accent: #1fed75;
+        --muted: #94a3b8;
+        --success: #10b981;
+        --danger: #ef4444;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+        margin: 0;
+        background: linear-gradient(180deg, #021029 0%, #082033 60%);
+        color: #e6eef6;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 28px auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .card {
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        box-shadow: 0 6px 24px rgba(2, 6, 23, 0.6);
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+      }
+      .col {
+        flex: 1;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      button {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 8px 12px;
+        border-radius: 8px;
+        color: inherit;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #032027;
+        border: none;
+      }
+      .stats {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .big {
+        font-size: 26px;
+        font-weight: 700;
+      }
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .board {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .game-area {
+        padding: 12px;
+      }
+      .question {
+        font-size: 18px;
+        margin: 8px 0;
+      }
+      .choices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .choice {
+        flex: 1 1 120px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        cursor: pointer;
+        text-align: center;
+      }
+      .choice:hover {
+        transform: translateY(-3px);
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .progress {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .progress > i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #60a5fa);
+        width: 0%;
+      }
+      .explain {
+        background: rgba(255, 255, 255, 0.02);
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        color: var(--muted);
+      }
+      .badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.01);
+      }
+      .level {
+        font-weight: 700;
+      }
+      .win {
+        color: var(--success);
+      }
+      .lose {
+        color: var(--danger);
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      footer.note {
+        margin-top: 18px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      @media (max-width: 880px) {
+        .board {
+          grid-template-columns: 1fr;
+        }
+        .stats {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Primos & Enteros — Juego educativo</h1>
+          <div class="subtitle">
+            Aprende usando gamificación: números primos, enteros y su aplicación
+            en ingeniería
+          </div>
+        </div>
+        <div style="margin-left: auto" class="stats">
+          <div class="small">Puntos</div>
+          <div id="score" class="big">0</div>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="row controls">
+          <div class="col">
+            <label class="small">Nivel</label>
+            <select id="levelSelect">
+              <option value="1">1 — Conceptos Básicos</option>
+              <option value="2">2 — Primos (Identificar)</option>
+              <option value="3">3 — Aplicación en Ingeniería</option>
+            </select>
+          </div>
+          <div>
+            <label class="small">Rondas</label>
+            <input
+              id="rounds"
+              type="number"
+              value="8"
+              min="3"
+              style="
+                width: 64px;
+                padding: 6px;
+                border-radius: 6px;
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.04);
+                color: inherit;
+              "
+            />
+          </div>
+          <div style="margin-left: auto">
+            <button id="startBtn" class="primary">Iniciar Juego</button>
+            <button id="resetBtn">Reiniciar</button>
+          </div>
+        </div>
+
+        <div class="board">
+          <div class="game-area card" id="gameCard">
+            <div id="intro" style="display: block">
+              <h2>Cómo jugar</h2>
+              <p class="small">
+                Elige un nivel y presiona <strong>Iniciar Juego</strong>.
+                Responde correctamente para ganar puntos, obtén rachas para
+                desbloquear insignias. Cada respuesta viene con una breve
+                explicación de por qué es primo/entero y cómo se relaciona con
+                la ingeniería.
+              </p>
+            </div>
+
+            <div id="playArea" style="display: none">
+              <div class="question" id="questionText">Pregunta</div>
+              <div class="choices" id="choices"></div>
+              <div class="explain" id="explain" style="display: none"></div>
+              <div class="footer">
+                <div class="hint" id="hint">
+                  Tiempo: <span id="timeLeft">--</span>s • Vidas:
+                  <span id="lives">--</span>
+                </div>
+                <div>
+                  <div class="progress" style="width: 200px">
+                    <i id="progressBar"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 12px">
+            <div>
+              <div class="small">Nivel actual</div>
+              <div class="level" id="levelBadge">—</div>
+            </div>
+            <div style="margin-top: 12px">
+              <div class="small">Racha</div>
+              <div id="streak">0</div>
+            </div>
+            <div style="margin-top: 12px">
+              <div class="small">Insignias</div>
+              <div id="badges"></div>
+            </div>
+
+            <div style="margin-top: 14px">
+              <div class="small">Explicación rápida</div>
+              <div class="explain" id="quickExplain">
+                Enteros: números sin parte fraccionaria. Primos: enteros mayores
+                que 1 que sólo son divisibles por 1 y por sí mismos. En
+                ingeniería, los enteros se usan para conteos, índices, unidades
+                discretas; los primos aparecen en criptografía, hash,
+                particionado y muestreo.
+              </div>
+            </div>
+
+            <div style="margin-top: 12px">
+              <div class="small">
+                PRIMER BLOQUE-TEORICO - VIRTUAL/ELEMENTOS DE TEORÍA DE LA
+                COMPUTACIÓN-[GRUPO B05]
+              </div>
+              <div class="hint"></div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="endScreen"
+          style="display: none; margin-top: 14px"
+          class="card"
+        >
+          <h3 id="endTitle">Fin</h3>
+          <p id="endMsg"></p>
+          <div style="display: flex; gap: 8px">
+            <button id="playAgain" class="primary">Jugar otra vez</button>
+            <button id="shareBtn">Guardar resultado</button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="note">
+        Politecnico Grancolombiano- Leidy Johanna Mahecha Ospina
+        <code>
+          <hr />
+          Game Numeros Primos y Enteros - Modelo educativo Primaria
+        </code>
+      </footer>
+    </div>
+
+    <script>
+      // --- Lógica del juego ---
+      const startBtn = document.getElementById("startBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const levelSelect = document.getElementById("levelSelect");
+      const roundsInput = document.getElementById("rounds");
+      const scoreEl = document.getElementById("score");
+      const questionText = document.getElementById("questionText");
+      const choicesEl = document.getElementById("choices");
+      const playArea = document.getElementById("playArea");
+      const intro = document.getElementById("intro");
+      const explain = document.getElementById("explain");
+      const timeLeftEl = document.getElementById("timeLeft");
+      const livesEl = document.getElementById("lives");
+      const progressBar = document.getElementById("progressBar");
+      const levelBadge = document.getElementById("levelBadge");
+      const streakEl = document.getElementById("streak");
+      const badgesEl = document.getElementById("badges");
+      const endScreen = document.getElementById("endScreen");
+      const endTitle = document.getElementById("endTitle");
+      const endMsg = document.getElementById("endMsg");
+      const playAgain = document.getElementById("playAgain");
+      const shareBtn = document.getElementById("shareBtn");
+
+      let score = 0,
+        round = 0,
+        rounds = 8,
+        level = 1,
+        lives = 3,
+        streak = 0,
+        badges = [];
+      let timer = null,
+        timePerQuestion = 15;
+
+      function isPrime(n) {
+        if (n <= 1 || !Number.isInteger(n)) return false;
+        if (n <= 3) return true;
+        if (n % 2 === 0) return false;
+        const limit = Math.floor(Math.sqrt(n));
+        for (let i = 3; i <= limit; i += 2) if (n % i === 0) return false;
+        return true;
+      }
+
+      function startGame() {
+        score = 0;
+        round = 0;
+        streak = 0;
+        badges = [];
+        rounds = Math.max(3, Number(roundsInput.value) || 8);
+        level = Number(levelSelect.value);
+        lives = 3;
+        timePerQuestion = level === 1 ? 18 : level === 2 ? 15 : 12;
+        scoreEl.textContent = score;
+        levelBadge.textContent =
+          level === 1 ? "Básico" : level === 2 ? "Primos" : "Ingeniería";
+        intro.style.display = "none";
+        playArea.style.display = "block";
+        endScreen.style.display = "none";
+        nextRound();
+      }
+
+      function nextRound() {
+        if (round >= rounds || lives <= 0) {
+          finishGame();
+          return;
+        }
+        round++;
+        explain.style.display = "none";
+        // generar pregunta según nivel
+        const q = generateQuestion(level);
+        renderQuestion(q);
+        startTimer(timePerQuestion);
+      }
+
+      function generateQuestion(lvl) {
+        // nivel 1: identificar si es entero / no entero
+        // nivel 2: identificar si es primo (múltiples opciones)
+        // nivel 3: mini-aplicaciones ingenieriles (contexto)
+        if (lvl === 1) {
+          const a = (Math.random() * 50 - 25).toFixed(
+            Math.random() < 0.5 ? 0 : 2
+          );
+          return {
+            type: "entero",
+            value: Number(a),
+            text: `¿El número ${a} es un ENTERO?`,
+            correct: Number.isInteger(Number(a)),
+            explain: `Un entero no tiene parte fraccional. ${a} ${
+              Number.isInteger(Number(a)) ? "sí" : "no"
+            } es entero.`,
+          };
+        }
+
+        if (lvl === 2) {
+          // presentar 4 opciones, una es primo
+          const options = [];
+          let primeIdx = Math.floor(Math.random() * 4);
+          for (let i = 0; i < 4; i++) {
+            if (i === primeIdx) {
+              let p;
+              do {
+                p = Math.floor(Math.random() * 90) + 2;
+              } while (!isPrime(p));
+              options.push({ label: p, prime: true });
+            } else {
+              let c;
+              do {
+                c = Math.floor(Math.random() * 90) + 2;
+              } while (isPrime(c));
+              options.push({ label: c, prime: false });
+            }
+          }
+          return {
+            type: "multiple",
+            text: "Selecciona el NÚMERO PRIMO entre las opciones:",
+            options,
+            explain: "Los primos sólo son divisibles por 1 y por sí mismos.",
+          };
+        }
+
+        if (lvl === 3) {
+          // Aplicación: se da un mini-escenario ingenieril y se pide elegir el número entero / primo adecuado
+          const scenarios = [
+            {
+              q: `Tienes que dividir una red en subgrupos iguales (no fracciones). ¿Qué tipo de número necesitas?`,
+              choices: ["Entero", "Primo", "No importa"],
+              answer: "Entero",
+              explain:
+                "Para particionar en cantidad de nodos iguales se requieren números enteros (conteos).",
+            },
+            {
+              q: `En criptografía simple se recomienda usar números con propiedades especiales para claves. ¿Qué tipo suele emplearse?`,
+              choices: [
+                "Entero cualquiera",
+                "Primos (p y q)",
+                "Números negativos",
+              ],
+              answer: "Primos (p y q)",
+              explain:
+                "En RSA y sistemas similares se usan primos grandes para seguridad.",
+            },
+            {
+              q: `Para indexar los pernos en una estructura (posición 1,2,3...), se usan:`,
+              choices: ["Números reales", "Enteros", "Décimas"],
+              answer: "Enteros",
+              explain:
+                "Los índices son enteros (no tiene sentido usar fracciones para posiciones discretas).",
+            },
+          ];
+          const s = scenarios[Math.floor(Math.random() * scenarios.length)];
+          return {
+            type: "scenario",
+            text: s.q,
+            choices: s.choices,
+            answer: s.answer,
+            explain: s.explain,
+          };
+        }
+      }
+
+      function renderQuestion(q) {
+        questionText.textContent = q.text;
+        choicesEl.innerHTML = "";
+        if (q.type === "entero") {
+          const btnYes = makeChoice("Sí", () =>
+            submitAnswer(q.correct === true, q)
+          );
+          const btnNo = makeChoice("No", () =>
+            submitAnswer(q.correct === false, q)
+          );
+          choicesEl.appendChild(btnYes);
+          choicesEl.appendChild(btnNo);
+        } else if (q.type === "multiple") {
+          q.options.forEach((opt) => {
+            choicesEl.appendChild(
+              makeChoice(opt.label, () =>
+                submitAnswer(opt.prime, { ...q, chosen: opt.label })
+              )
+            );
+          });
+        } else if (q.type === "scenario") {
+          q.choices.forEach((ch) =>
+            choicesEl.appendChild(
+              makeChoice(ch, () => submitAnswer(ch === q.answer, q))
+            )
+          );
+        }
+        // store current question
+        window._currentQuestion = q;
+        updateHUD();
+      }
+
+      function makeChoice(text, cb) {
+        const d = document.createElement("div");
+        d.className = "choice";
+        d.tabIndex = 0;
+        d.textContent = text;
+        d.addEventListener("click", () => {
+          cb();
+        });
+        d.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") cb();
+        });
+        return d;
+      }
+
+      function submitAnswer(correct, q) {
+        stopTimer();
+        if (correct) {
+          const points = 10 + Math.min(20, streak * 2);
+          score += points;
+          streak++;
+          if (streak > 0 && streak % 4 === 0) {
+            badges.push(`Racha x${streak}`);
+          }
+          explain.textContent = `✅ Correcto — +${points} pts. \nExplicación: ${
+            q.explain || explainTextFor(q)
+          }`;
+          explain.classList.remove("lose");
+          explain.classList.add("win");
+        } else {
+          streak = 0;
+          lives--;
+          explain.textContent = `❌ Incorrecto. \nExplicación: ${
+            q.explain || explainTextFor(q)
+          }`;
+          explain.classList.remove("win");
+          explain.classList.add("lose");
+        }
+        explain.style.display = "block";
+        scoreEl.textContent = score;
+        streakEl.textContent = streak;
+        badgesEl.innerHTML = badges
+          .map((b) => `<span class="badge">${b}</span>`)
+          .join(" ");
+        // breve pausa antes de siguiente pregunta
+        setTimeout(() => nextRound(), 1200);
+      }
+
+      function explainTextFor(q) {
+        if (!q) return "";
+        if (q.type === "entero")
+          return `${q.value} ${
+            Number.isInteger(q.value) ? "es entero" : "no es entero"
+          }`;
+        if (q.type === "multiple")
+          return "Los primos sólo son divisibles por 1 y por sí mismos.";
+        return q.explain || "";
+      }
+
+      function startTimer(seconds) {
+        let left = seconds;
+        timeLeftEl.textContent = left;
+        progressBar.style.width = "0%";
+        const total = seconds;
+        timer = setInterval(() => {
+          left--;
+          timeLeftEl.textContent = left;
+          progressBar.style.width = `${Math.round((1 - left / total) * 100)}%`;
+          if (left <= 0) {
+            stopTimer();
+            handleTimeout();
+          }
+        }, 1000);
+      }
+      function stopTimer() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+      function handleTimeout() {
+        lives--;
+        streak = 0;
+        explain.style.display = "block";
+        explain.textContent = "⏱️ Se acabó el tiempo. Pierdes una vida.";
+        explain.classList.remove("win");
+        explain.classList.add("lose");
+        scoreEl.textContent = score;
+        streakEl.textContent = streak;
+        badgesEl.innerHTML = badges
+          .map((b) => `<span class="badge">${b}</span>`)
+          .join(" ");
+        setTimeout(() => nextRound(), 1000);
+      }
+
+      function updateHUD() {
+        livesEl.textContent = lives;
+      }
+
+      function finishGame() {
+        stopTimer();
+        playArea.style.display = "none";
+        endScreen.style.display = "block";
+        endTitle.textContent = lives > 0 ? "Juego terminado" : "Game Over";
+        endMsg.innerHTML = `Puntuación final: <strong>${score}</strong><br/>Rachas más largas/insignias: ${
+          badges.length ? badges.join(", ") : "ninguna"
+        }`;
+      }
+
+      startBtn.addEventListener("click", startGame);
+      resetBtn.addEventListener("click", () => location.reload());
+      playAgain.addEventListener("click", () => {
+        intro.style.display = "block";
+        endScreen.style.display = "none";
+        playArea.style.display = "none";
+      });
+      shareBtn.addEventListener("click", () => {
+        // descargar resultado como txt
+        const blob = new Blob(
+          [`Puntos:${score}\nRachas:${badges.join(", ")}`],
+          { type: "text/plain" }
+        );
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "resultado_primos_enteros.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // pequeñas mejoras: puntuación guardada localmente
+      window.addEventListener("beforeunload", () => {
+        localStorage.setItem("primos_score", score);
+      });
+    </script>
+  </body>
+</html>
